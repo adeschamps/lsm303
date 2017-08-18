@@ -24,3 +24,15 @@ bitflags!{
         const FS_16G = FS1.bits | FS0.bits;
     }
 }
+
+
+bitflags!{
+    pub struct MrRegM: u8 {
+        const MD1 = 1 << 1;
+        const MD0 = 1 << 0;
+
+        const MODE_CONTINUOUS = 0;
+        const MODE_SINGLE_CONVERSION = MD0.bits;
+        const SLEEP_MODE = MD1.bits;
+    }
+}
