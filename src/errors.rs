@@ -1,3 +1,7 @@
+// This can probably be removed soon. See:
+// https://github.com/steveklabnik/rustdoc/issues/96
+#![allow(unused_doc_comment)]
+
 //! The error type for this crate.
 
 error_chain!{
