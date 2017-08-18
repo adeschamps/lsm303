@@ -24,12 +24,15 @@ pub struct LSM303<Dev: I2CDevice>
     mag_device: Dev,
 }
 
-impl<Dev> LSM303<Dev>
-    where Dev: I2CDevice,
-          Error: From<Dev::Error>
-{
+/// Implement the sensor for Linux I2C devices.
+use i2cdev::linux::LinuxI2CDevice;
+impl LSM303<LinuxI2CDevice> {
     /// Initialize the sensor.
-    pub fn new(mut accel_device: Dev, mut mag_device: Dev) -> Result<LSM303<Dev>> {
+    pub fn new<Path>(path: Path) -> Result<LSM303<LinuxI2CDevice>>
+        where Path: AsRef<std::path::Path>
+    {
+        let mut accel_device = LinuxI2CDevice::new(&path, constants::ADDRESS_ACCEL)
+            .chain_err(|| ErrorKind::FailedToOpenDevice)?;
         accel_device.smbus_write_byte_data(registers::ACCEL_CTRL_REG1_A, 0x27)?;
 
         // Initialize the accelerometer
@@ -41,6 +44,8 @@ impl<Dev> LSM303<Dev>
         accel_device.smbus_write_byte_data(registers::ACCEL_CTRL_REG4_A, reg4_a.bits())?;
 
         // Initialize the magnetometer
+        let mut mag_device = LinuxI2CDevice::new(&path, constants::ADDRESS_MAG)
+            .chain_err(|| ErrorKind::FailedToOpenDevice)?;
         let reg_m: registers::MrRegM = registers::MODE_CONTINUOUS;
         mag_device.smbus_write_byte_data(registers::MAG_MR_REG_M, reg_m.bits())?;
 
@@ -50,7 +55,12 @@ impl<Dev> LSM303<Dev>
         };
         Ok(lsm303)
     }
+}
 
+impl<Dev> LSM303<Dev>
+    where Dev: I2CDevice,
+          Error: From<Dev::Error>
+{
     /// Read the accelerometer.
     /// Returns a tuple of (x, y, z) acceleration in cm/s^2.
     pub fn read_accel(&mut self) -> Result<(i16, i16, i16)> {

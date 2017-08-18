@@ -6,6 +6,9 @@
 
 error_chain!{
     errors {
+        /// Error opening the I2C device
+        FailedToOpenDevice{}
+
         /// An insufficient amount of data was read from the device.
         NotEnoughData{}
     }
