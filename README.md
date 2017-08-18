@@ -2,7 +2,7 @@
 
 This is a driver for the LSM303DLHC digital accelerometer and magnetometer.
 
-[Datasheet(http://www.st.com/resource/en/datasheet/lsm303dlhc.pdf)
+[Datasheet](http://www.st.com/resource/en/datasheet/lsm303dlhc.pdf)
 
 ## Getting started
 
