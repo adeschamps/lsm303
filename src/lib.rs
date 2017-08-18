@@ -75,6 +75,9 @@ impl<Dev> LSM303<Dev>
         Ok(out)
     }
 
+    /// Read the magnetometer.
+    /// Returns a tuple of (x, y, z).
+    /// WIP: the units are unclear.
     pub fn read_magnetometer(&mut self) -> Result<(i16, i16, i16)> {
 
         use byteorder::{BigEndian, ReadBytesExt};
