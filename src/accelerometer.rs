@@ -1,9 +1,13 @@
-use constants;
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
 use registers;
 use std::ops::{Deref, DerefMut};
+
+
+/// The I2C address of the accelerometer.
+const I2C_ADDRESS: u16 = 0x32 >> 1;
+
 
 pub struct Accelerometer<Dev>
     where Dev: I2CDevice
@@ -17,7 +21,7 @@ impl Accelerometer<LinuxI2CDevice> {
     pub fn new<Path>(path: Path) -> Result<Accelerometer<LinuxI2CDevice>>
         where Path: AsRef<::std::path::Path>
     {
-        let device = LinuxI2CDevice::new(&path, constants::ADDRESS_ACCEL)
+        let device = LinuxI2CDevice::new(&path, I2C_ADDRESS)
             .chain_err(|| ErrorKind::FailedToOpenDevice)?;
 
         Accelerometer::from_i2c_device(device)

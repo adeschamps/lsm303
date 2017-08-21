@@ -9,7 +9,6 @@ extern crate error_chain;
 extern crate i2cdev;
 
 mod accelerometer;
-pub mod constants;
 mod errors;
 mod magnetometer;
 pub mod registers;
