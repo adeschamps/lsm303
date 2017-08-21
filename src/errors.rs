@@ -11,6 +11,10 @@ error_chain!{
 
         /// An insufficient amount of data was read from the device.
         NotEnoughData{}
+
+        FailedToReadRegister{}
+
+        FailedToWriteRegister{}
     }
 
     foreign_links {
