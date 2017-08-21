@@ -14,13 +14,17 @@ quick_main!(run);
 fn run() -> Result<()> {
     let device = "/dev/i2c-1";
 
-    let mut lsm303 = lsm303::LSM303::new(device).chain_err(|| "Failed to open LSM303 sensor")?;
+    let mut accelerometer =
+        lsm303::Accelerometer::new(device).chain_err(|| "Failed to initialize the accelerometer")?;
+    let mut magnetometer =
+        lsm303::Magnetometer::new(device).chain_err(|| "Failed to initialize the magnetometer")?;
 
     loop {
-        let (a_x, a_y, a_z) = lsm303.read_accel()
+        let (a_x, a_y, a_z) = accelerometer.read_acceleration()
             .chain_err(|| "Failed to read the accelerometer")?;
-        let (m_x, m_y, m_z) = lsm303.read_magnetometer()
+        let (m_x, m_y, m_z) = magnetometer.read_magnetic_field()
             .chain_err(|| "Failed to read the magnetometer")?;
+
         println!("Accel: {}, {}, {}  ||  Mag: {}, {}, {}",
                  a_x,
                  a_y,
