@@ -12,8 +12,10 @@ error_chain!{
         /// An insufficient amount of data was read from the device.
         NotEnoughData{}
 
+        /// An error occurred receiving information from the I2C slave.
         FailedToReadRegister{}
 
+        /// An error occurred sending information to the I2C slave.
         FailedToWriteRegister{}
     }
 

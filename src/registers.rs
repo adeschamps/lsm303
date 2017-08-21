@@ -1,3 +1,8 @@
+// This module contains type and constant definitions for registers.
+// It is derived directly from the datasheet,
+// which should serve as its best documentation.
+#![allow(missing_docs)]
+
 //! A subset of the registers on the LSM303 - just the ones that we need.
 
 use errors::{ErrorKind, Result, ResultExt};

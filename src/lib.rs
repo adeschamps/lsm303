@@ -1,3 +1,7 @@
+#![deny(missing_docs)]
+
+//! Interface to the LSM303 digital accelerometer and magnetometer.
+
 #[macro_use]
 extern crate bitflags;
 
