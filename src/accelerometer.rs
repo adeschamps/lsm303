@@ -9,6 +9,7 @@ use std::ops::{Deref, DerefMut};
 const I2C_ADDRESS: u16 = 0x32 >> 1;
 
 
+/// Interface to an LSM303 digital accelerometer.
 pub struct Accelerometer<Dev>
     where Dev: I2CDevice
 {
