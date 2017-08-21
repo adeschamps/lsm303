@@ -104,21 +104,74 @@ registers!(
     0x02, MrRegM;
 );
 
-/*
-register!(0x00, CraRegM);
-register!(0x01, CrbRegM);
-register!(0x02, MrRegM);
- */
 
-pub const ACCEL_CTRL_REG1_A: u8 = 0x20;
-pub const ACCEL_CTRL_REG4_A: u8 = 0x23;
-pub const ACCEL_OUT_X_L_A: u8 = 0x28;
+/// A macro to declare a bunch of u8 constants
+macro_rules! register_addresses {
+    ( $($address:expr => $name:ident;)* ) => {
+        $( pub const $name: u8 = $address; )*
+    }
+}
 
-pub const CRA_REG_M: u8 = 0x00;
-pub const CRB_REG_M: u8 = 0x01;
-pub const MR_REG_M: u8 = 0x02;
-pub const OUT_X_H_M: u8 = 0x03;
-pub const TEMP_OUT_H_M: u8 = 0x31;
+
+// Declare all the register addresses.
+// This is based on Table 17 of the LSM303DLHC datasheet.
+register_addresses! {
+    // Accelerometer
+
+    // 0x00 - 0x1F => reserved
+    0x20 => CTRL_REG1_A;
+    0x21 => CTRL_REG2_A;
+    0x22 => CTRL_REG3_A;
+    0x23 => CTRL_REG4_A;
+    0x24 => CTRL_REG5_A;
+    0x25 => CTRL_REG6_A;
+    0x26 => REFERENCE_A;
+    0x27 => STATUS_REG_A;
+    0x28 => OUT_X_L_A;
+    0x29 => OUT_X_H_H;
+    0x2A => OUT_Y_L_A;
+    0x2B => OUT_Y_H_A;
+    0x2C => OUT_Z_L_A;
+    0x2D => OUT_Z_H_A;
+    0x2E => FIFO_CTRL_REG_A;
+    0x2F => FIFO_SRC_REG_A;
+    0x30 => INT1_CFG_A;
+    0x31 => INT1_SOURCE_A;
+    0x32 => INT1_THS_A;
+    0x33 => INT1_DURATION_A;
+    0x34 => INT2_CFG_A;
+    0x35 => INT2_SOURCE_A;
+    0x36 => INT2_THS_A;
+    0x37 => INT2_DURATION_A;
+    0x38 => CLICK_CFG_A;
+    0x39 => CLICK_SRC_A;
+    0x3A => CLICK_THS_A;
+    0x3B => TIME_LIMIT_A;
+    0x3C => TIME_LATENCY_A;
+    0x3D => TIME_WINDOW_A;
+    // 0x3E - 0x3F => reserved
+
+    // Magnetometer
+
+    0x00 => CRA_REG_M;
+    0x01 => CRB_REG_M;
+    0x02 => MR_REG_M;
+    0x03 => OUT_X_H_M;
+    0x04 => OUT_X_L_M;
+    0x05 => OUT_Z_H_M;
+    0x06 => OUT_Z_L_M;
+    0x07 => OUT_Y_H_M;
+    0x08 => OUT_Y_L_M;
+    0x09 => SR_REG_M;
+    0x0A => IRA_REG_M;
+    0x0B => IRB_REG_M;
+    0x0C => IRC_REG_M;
+    // 0x0D - 0x30 => reserved
+    0x31 => TEMP_OUT_H_M;
+    0x32 => TEMP_OUT_L_M;
+    // 0x33 - 0x3A => reserved
+}
+
 
 bitflags!{
     pub struct CtrlReg4A: u8 {

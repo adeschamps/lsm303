@@ -40,14 +40,14 @@ impl<Dev> Accelerometer<Dev>
     /// but the initialization is not.
     pub fn from_i2c_device(mut device: Dev) -> Result<Accelerometer<Dev>> {
 
-        device.smbus_write_byte_data(registers::ACCEL_CTRL_REG1_A, 0x27)?;
+        device.smbus_write_byte_data(registers::CTRL_REG1_A, 0x27)?;
 
         let mut reg4_a = {
-            let bits = device.smbus_read_byte_data(registers::ACCEL_CTRL_REG4_A)?;
+            let bits = device.smbus_read_byte_data(registers::CTRL_REG4_A)?;
             registers::CtrlReg4A::from_bits_truncate(bits)
         };
         reg4_a.set(registers::HR, true);
-        device.smbus_write_byte_data(registers::ACCEL_CTRL_REG4_A, reg4_a.bits())?;
+        device.smbus_write_byte_data(registers::CTRL_REG4_A, reg4_a.bits())?;
 
         let accelerometer = Accelerometer { device };
         Ok(accelerometer)
@@ -61,7 +61,7 @@ impl<Dev> Accelerometer<Dev>
         use std::io::Cursor;
 
         let data = self.device
-            .smbus_read_i2c_block_data(registers::ACCEL_OUT_X_L_A | 0x80, 6)?;
+            .smbus_read_i2c_block_data(registers::OUT_X_L_A | 0x80, 6)?;
 
         if data.len() < 6 {
             bail!(ErrorKind::NotEnoughData);
