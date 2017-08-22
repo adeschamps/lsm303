@@ -37,8 +37,10 @@ impl<Dev> Magnetometer<Dev>
     /// Initialize the magnetometer, given an open I2C device.
     ///
     /// The opening of the device is platform specific,
-    /// but the initialization is not.
-    fn from_i2c_device(mut device: Dev) -> Result<Magnetometer<Dev>> {
+    /// but initialization of the sensor is not.
+    /// Prefer to use `Accelerometer::new`, unless you are using an
+    /// implementation of `I2CDevice` that is not covered by this crate.
+    pub fn from_i2c_device(mut device: Dev) -> Result<Magnetometer<Dev>> {
         let mr_reg_m: registers::MrRegM = registers::MODE_CONTINUOUS;
         device.smbus_write_byte_data(registers::MR_REG_M, mr_reg_m.bits())?;
 

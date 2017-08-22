@@ -37,7 +37,9 @@ impl<Dev> Accelerometer<Dev>
     /// Initialize the accelerometer, given an open I2C device.
     ///
     /// The opening of the device is platform specific,
-    /// but the initialization is not.
+    /// but initialization of the sensor is not.
+    /// Prefer to use `Accelerometer::new`, unless you are using an
+    /// implementation of `I2CDevice` that is not covered by this crate.
     pub fn from_i2c_device(mut device: Dev) -> Result<Accelerometer<Dev>> {
 
         device.smbus_write_byte_data(registers::CTRL_REG1_A, 0x27)?;
