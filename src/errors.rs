@@ -21,6 +21,6 @@ error_chain!{
 
     foreign_links {
         I2C(::i2cdev::linux::LinuxI2CError) #[doc = "An error from an I2C device."];
-        ByteOrder(::byteorder::Error) #[doc = "An error converting bytes."];
+        IO(::std::io::Error) #[doc = "An IO error."];
     }
 }
