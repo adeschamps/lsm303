@@ -55,7 +55,7 @@ pub trait Register<T> {
 /// ```ignore
 /// register!(0x00, RegA);
 /// ```
-#[macro_export] macro_rules! register {
+macro_rules! register {
     ($address:expr, $bitflag:ident) => {
         impl<Dev> Register<$bitflag> for Dev
             where Dev: I2CDevice,
