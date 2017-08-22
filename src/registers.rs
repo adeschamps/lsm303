@@ -13,7 +13,7 @@ use i2cdev::core::I2CDevice;
 /// A device may implement this trait for each type of register it manipulates.
 /// There is no need to manipulate it by hand; use the `register!` macro instead:
 ///
-/// ```
+/// ```ignore
 /// # #[macro_use] extern crate bitflags;
 /// # bitflags!{ struct CtrlReg4A: u8 { const BDU = 1 << 7; } }
 /// # #[macro_use] extern crate lsm303;
