@@ -174,12 +174,12 @@ register_addresses! {
 
 
 macro_rules! define_registers {
-    ( $( $name:ident { $( $value:expr,$b:ident | )* } )* ) => {
+    ( $( $name:ident { $( $shift:expr,$b:ident | )* } )* ) => {
         $(
             bitflags!{
                 pub struct $name: u8 {
                     $(
-                        #[allow(non_upper_case_globals)] const $b = $value << 0;
+                        #[allow(non_upper_case_globals)] const $b = 1 << $shift;
                     )*
                 }
             }
