@@ -173,19 +173,40 @@ register_addresses! {
 }
 
 
+/// Declare multiple bitflags using an abbreviated syntax.
+///
+/// All of the registers are 8 bits, with each flag being a single bit.
 macro_rules! define_registers {
-    ( $( $name:ident { $( $shift:expr,$b:ident | )* } )* ) => {
+    (
+        $(
+            $name:ident {
+                $( $shift:expr,$b:ident | )*
+            }
+        )*
+    ) => {
         $(
             bitflags!{
                 pub struct $name: u8 {
                     $(
-                        #[allow(non_upper_case_globals)] const $b = 1 << $shift;
+                        #[allow(non_upper_case_globals)]
+                        const $b = 1 << $shift;
                     )*
                 }
             }
         )*
     }
 }
+
+// The following definitions cover many, but not all, of the LSM303 bitflags.
+//
+// Most of the flags are unique to a single register.
+// In those cases, the names directly correspond to the register address.
+//
+// In a few cases, such as for `INT1_*_A` and `INT2_*_A`,
+// multiple registers have the same flag types.
+//
+// Registers that contain numeric values for a single purpose,
+// such as `TEMP_OUT_*_M` and `TIME_WINDOW_A` are also not defined here.
 
 define_registers!{
 
