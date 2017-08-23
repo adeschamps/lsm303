@@ -221,39 +221,3 @@ define_registers!{
         /* ----------- | ------------- */ 1, LOCK        | 0, DRDY        |
     }
 }
-
-
-
-
-
-
-/// The allowed settings for the gain on the magnetometer.
-#[allow(non_camel_case_types)]
-pub enum MagGain {
-    Gain_1_3,
-    Gain_1_9,
-    Gain_2_5,
-    Gain_4_0,
-    Gain_4_7,
-    Gain_5_6,
-    Gain_8_1,
-}
-
-impl CrbRegM {
-    pub fn set_gain(&mut self, gain: MagGain) {
-        let mask = GN2 | GN1 | GN0;
-
-        let value = match gain {
-            MagGain::Gain_1_3 => GN0,
-            MagGain::Gain_1_9 => GN1,
-            MagGain::Gain_2_5 => GN2 | GN1,
-            MagGain::Gain_4_0 => GN2,
-            MagGain::Gain_4_7 => GN2 | GN0,
-            MagGain::Gain_5_6 => GN2 | GN1,
-            MagGain::Gain_8_1 => GN2 | GN1 | GN0,
-        };
-
-        self.remove(mask);
-        self.insert(value);
-    }
-}

@@ -1,3 +1,5 @@
+//! Interface to the magnetometer.
+
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
@@ -14,6 +16,27 @@ pub struct Magnetometer<Dev>
     where Dev: I2CDevice
 {
     device: Dev,
+    gain: Gain,
+}
+
+
+/// The allowed settings for the gain on the magnetometer.
+#[allow(non_camel_case_types)]
+pub enum Gain {
+    /// +/- 1.3 Gauss
+    Gain_1_3,
+    /// +/- 1.9 Gauss
+    Gain_1_9,
+    /// +/- 2.5 Gauss
+    Gain_2_5,
+    /// +/- 4.0 Gauss
+    Gain_4_0,
+    /// +/- 4.7 Gauss
+    Gain_4_7,
+    /// +/- 5,6 Gauss
+    Gain_5_6,
+    /// +/- 8.1 Gauss
+    Gain_8_1,
 }
 
 
@@ -52,7 +75,9 @@ impl<Dev> Magnetometer<Dev>
         let cra_reg_m = r::TEMP_EN | r::DO2;
         write_register!(device, r::CRA_REG_M, cra_reg_m)?;
 
-        let magnetometer = Magnetometer { device };
+        let gain = Gain::Gain_1_3;
+
+        let magnetometer = Magnetometer { device, gain };
         Ok(magnetometer)
     }
 
@@ -84,14 +109,28 @@ impl<Dev> Magnetometer<Dev>
 
 
     /// Set the gain of the magnetometer.
-    pub fn set_gain(&mut self, gain: registers::MagGain) -> Result<()>
+    pub fn set_gain(&mut self, gain: Gain) -> Result<()>
         where Dev::Error: Send + 'static
     {
-        use registers::{CRB_REG_M, CrbRegM};
-        let mut register = read_register!(self.device, CRB_REG_M, CrbRegM)?;
+        use registers::{self as r, CRB_REG_M, CrbRegM};
+        let mut flags = read_register!(self.device, CRB_REG_M, CrbRegM)?;
 
-        register.set_gain(gain);
-        write_register!(self.device, CRB_REG_M, register)
+        flags.remove(r::GN2 | r::GN1 | r::GN0);
+        let setting = match gain {
+            Gain::Gain_1_3 => /* --  |  ---- */ r::GN0,
+            Gain::Gain_1_9 => /* -- */ r::GN1,
+            Gain::Gain_2_5 => /* -- */ r::GN1 | r::GN0,
+            Gain::Gain_4_0 => r::GN2,
+            Gain::Gain_4_7 => r::GN2 | /* -- */ r::GN0,
+            Gain::Gain_5_6 => r::GN2 | r::GN1,
+            Gain::Gain_8_1 => r::GN2 | r::GN1 | r::GN0,
+        };
+        flags.insert(setting);
+
+        write_register!(self.device, CRB_REG_M, flags)?;
+        self.gain = gain;
+
+        Ok(())
     }
 
 
