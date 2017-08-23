@@ -173,49 +173,109 @@ register_addresses! {
 }
 
 
-bitflags!{
-    pub struct CtrlReg4A: u8 {
-        const BDU = 1 << 7;
-        const BLE = 1 << 6;
-        const FS1 = 1 << 5;
-        const FS0 = 1 << 4;
-        const HR  = 1 << 3;
-        // not used 1 << 2;
-        // not used 1 << 1;
-        const SIM = 1 << 0;
+macro_rules! define_registers {
+    ( $( $name:ident { $( $value:expr,$b:ident | )* } )* ) => {
+        $(
+            bitflags!{
+                pub struct $name: u8 {
+                    $(
+                        #[allow(non_upper_case_globals)] const $b = $value << 0;
+                    )*
+                }
+            }
+        )*
+    }
+}
 
-        const FS_2G = 0;
-        const FS_4G = FS0.bits;
-        const FS_8G = FS1.bits;
-        const FS_16G = FS1.bits | FS0.bits;
+define_registers!{
+
+    // Accelerometer
+
+    CtrlReg1A {
+        7, ODR3        | 6, ODR2        | 5, ODR1        | 4, ODR0        |
+        3, LPen        | 2, Zen         | 1, Yen         | 0, Xen         |
+    }
+    CtrlReg2Af {
+        7, HPM1        | 6, HPM0        | 5, HPCF2       | 4, HPCF1       |
+        3, FDS         | 2, HPCLICK     | 1, HPIS2       | 0, HPIS1       |
+    }
+    CtrlReg3A {
+        7, I1_CLICK    | 6, I1_AOI1     | 5, I1_AOI2     | 4, I1_DRDY1    |
+        3, I1_DRDY2    | 2, I1_WTM      | 1, I1_OVERRUN  | /* ---------- */
+    }
+    CtrlReg4A {
+        7, BDU         | 6, BLE         | 5, FS1         | 4, FS0         |
+        3, HR          | /* ----------- | ------------- */ 0, SIM         |
+    }
+    CtrlReg5A {
+        7, BOOT        | 6, FIFO_EN     | /* ----------- | ------------- */
+        3, LIR_INT1    | 2, D4D_INT1    | 1, LIR_INT2    | 0, D4D_INT2    |
+    }
+    CtrlReg6A {
+        7, I2_CLICK    | 6, I2_INT1     | 5, I2_INT2     | 4, BOOT_I1     |
+        3, P2_ACT      | /* ---------- */ 1, H_LACTIVE   | /* ---------- */
+    }
+    Reference {
+        7, Ref7        | 6, Ref6        | 5, Ref5        | 4, Ref4        |
+        3, Ref3        | 2, Ref2        | 1, Ref1        | 0, Ref0        |
+    }
+    StatusRegA {
+        7, ZYXOR       | 6, ZOR         | 5, YOR         | 4, XOR         |
+        3, ZYXDA       | 2, ZDA         | 1, YDA         | 0, XDA         |
+    }
+    FifoCtrlRegA {
+        7, FM1         | 6, FM0         | 5, TR          | 4, FTH4        |
+        3, FTH3        | 2, FTH2        | 1, FTH1        | 0, FTH0        |
+    }
+    FifoSrcRegA {
+        7, WTM         | 6, OVRN_FIFO   | 5, EMPTY       | 4, FSS4        |
+        3, FSS3        | 2, FSS2        | 1, FSS1        | 0, FSS0        |
+    }
+    IntCfgA {
+        7, AOI         | 6, _6D         | 5, ZHIE        | 4, ZLIO        |
+        3, YHIE        | 2, YLIE        | 1, XHIE        | 0, XLIE        |
+    }
+    IntSrcA {
+        /* ---------- */ 6, IA          | 5, ZH          | 4, ZL          |
+        3, YH          | 2, YL          | 1, XH          | 0, XL          |
+    }
+    IntDurationA {
+        /* ---------- */ 6, D6          | 5, D5          | 4, D4          |
+        3, D3          | 2, D2          | 1, D1          | 0, D0          |
+    }
+    ClickCfgA {
+        /* ----------- | ------------- */ 5, ZD          | 4, ZS          |
+        3, YD          | 2, YS          | 1, XD          | 0, XS          |
+    }
+    ClickSrcA {
+        /* ---------- */ 6, IA_click    | 5, DCLICK      | 5, SCLICK      |
+        3, Sign        | 2, Z           | 1, Y           | 0, X           |
+    }
+
+    // Magnetometer
+
+    CraRegM {
+        7, TEMP_EN     | /* ----------- | ------------- */ 4, DO2         |
+        3, DO1         | 2, DO0         | /* ----------- | ------------- */
+    }
+    CrbRegM {
+        7, GN2         | 6, GN1         | 5, GN0         | /* ---------- */
+        /* ----------- | -------------- | -------------- | ------------- */
+    }
+    MrRegM {
+        /* ----------- | -------------- | -------------- | ------------- */
+        /* ----------- | ------------- */ 1, MD1         | 0, MD0         |
+    }
+    SrRegM {
+        /* ----------- | -------------- | -------------- | ------------- */
+        /* ----------- | ------------- */ 1, LOCK        | 0, DRDY        |
     }
 }
 
 
-bitflags!{
-    pub struct CraRegM: u8 {
-        const TEMP_EN = 1 << 7;
-        const DO2 = 1 << 4;
-        const DO1 = 1 << 3;
-        const DO0 = 1 << 2;
-
-        const OUT_RATE_0_75 = 0;
-        const OUT_RATE_1_5 = DO0.bits;
-        const OUT_RATE_3_0 = DO1.bits;
-        const OUT_RATE_7_5 = DO1.bits | DO0.bits;
-        const OUT_RATE_15_0 = DO2.bits;
-        const OUT_RATE_30_0 = DO2.bits | DO0.bits;
-    }
-}
 
 
-bitflags! {
-    pub struct CrbRegM: u8 {
-        const GN2 = 1 << 7;
-        const GN1 = 1 << 6;
-        const GN0 = 1 << 5;
-    }
-}
+
 
 /// The allowed settings for the gain on the magnetometer.
 #[allow(non_camel_case_types)]
@@ -245,17 +305,5 @@ impl CrbRegM {
 
         self.remove(mask);
         self.insert(value);
-    }
-}
-
-
-bitflags!{
-    pub struct MrRegM: u8 {
-        const MD1 = 1 << 1;
-        const MD0 = 1 << 0;
-
-        const MODE_CONTINUOUS = 0;
-        const MODE_SINGLE_CONVERSION = MD0.bits;
-        const SLEEP_MODE = MD1.bits;
     }
 }
