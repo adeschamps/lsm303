@@ -1,3 +1,5 @@
+//! Interface to the accelerometer.
+
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
@@ -14,6 +16,20 @@ pub struct Accelerometer<Dev>
     where Dev: I2CDevice
 {
     device: Dev,
+    scale: Scale,
+}
+
+
+/// Settings for the scale of the acceleration measurement.
+pub enum Scale {
+    /// +/- 2G
+    Scale2G,
+    /// +/- 4G
+    Scale4G,
+    /// +/- 8G
+    Scale8G,
+    /// +/- 16G
+    Scale16G,
 }
 
 
@@ -22,8 +38,8 @@ impl Accelerometer<LinuxI2CDevice> {
     pub fn new<Path>(path: Path) -> Result<Accelerometer<LinuxI2CDevice>>
         where Path: AsRef<::std::path::Path>
     {
-        let device = LinuxI2CDevice::new(&path, I2C_ADDRESS)
-            .chain_err(|| ErrorKind::FailedToOpenDevice)?;
+        let device =
+            LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| ErrorKind::FailedToOpenDevice)?;
 
         Accelerometer::from_i2c_device(device)
     }
@@ -32,7 +48,8 @@ impl Accelerometer<LinuxI2CDevice> {
 
 impl<Dev> Accelerometer<Dev>
     where Dev: I2CDevice,
-          Error: From<Dev::Error>
+          Error: From<Dev::Error>,
+          Dev::Error: Send + 'static
 {
     /// Initialize the accelerometer, given an open I2C device.
     ///
@@ -41,23 +58,27 @@ impl<Dev> Accelerometer<Dev>
     /// Prefer to use `Accelerometer::new`, unless you are using an
     /// implementation of `I2CDevice` that is not covered by this crate.
     pub fn from_i2c_device(mut device: Dev) -> Result<Accelerometer<Dev>> {
+        use registers::{self as r, CTRL_REG1_A, CTRL_REG4_A, CtrlReg4A};
 
-        device.smbus_write_byte_data(registers::CTRL_REG1_A, 0x27)?;
+        // Set data rate to 10 Hz, enable all axes.
+        let ctrl_reg1_a = r::ODR1 | r::Zen | r::Yen | r::Xen;
+        write_register!(device, CTRL_REG1_A, ctrl_reg1_a)?;
 
-        let mut reg4_a = {
-            let bits = device.smbus_read_byte_data(registers::CTRL_REG4_A)?;
-            registers::CtrlReg4A::from_bits_truncate(bits)
-        };
-        reg4_a.set(registers::HR, true);
-        device.smbus_write_byte_data(registers::CTRL_REG4_A, reg4_a.bits())?;
+        // Enable high resolution output mode.
+        let mut ctrl_reg4_a = read_register!(device, CTRL_REG4_A, CtrlReg4A)?;
+        ctrl_reg4_a.insert(r::HR);
+        write_register!(device, CTRL_REG4_A, ctrl_reg4_a)?;
 
-        let accelerometer = Accelerometer { device };
+        // Default scale is +/- 2G
+        let scale = Scale::Scale2G;
+
+        let accelerometer = Accelerometer { device, scale };
         Ok(accelerometer)
     }
 
     /// Read the accelerometer.
     ///
-    /// Returns a tuple of (x, y, z) acceleration in cm/s^2.
+    /// Returns a tuple of (x, y, z) acceleration measured in milli-g's.
     pub fn read_acceleration(&mut self) -> Result<(i16, i16, i16)> {
         use byteorder::{LittleEndian, ReadBytesExt};
         use std::io::Cursor;
@@ -75,8 +96,36 @@ impl<Dev> Accelerometer<Dev>
         let y = cursor.read_i16::<LittleEndian>()? >> 4;
         let z = cursor.read_i16::<LittleEndian>()? >> 4;
 
-        let out = (x, y, z);
+        let scale = match self.scale {
+            Scale::Scale2G => 1,
+            Scale::Scale4G => 2,
+            Scale::Scale8G => 4,
+            Scale::Scale16G => 12, // This one doesn't follow the pattern - is the datasheet correct?
+        };
+
+        let out = (x * scale, y * scale, z * scale);
         Ok(out)
+    }
+
+    /// Set the scale of the acceleration measurement.
+    pub fn set_scale(&mut self, scale: Scale) -> Result<()> {
+        use registers::{CTRL_REG4_A, CtrlReg4A, FS1, FS0};
+
+        let mut flags = read_register!(self.device, CTRL_REG4_A, CtrlReg4A)?;
+        let (fs1, fs0) = match scale {
+            Scale::Scale2G => (false, false),
+            Scale::Scale4G => (false, true),
+            Scale::Scale8G => (true, false),
+            Scale::Scale16G => (true, true),
+        };
+        flags.set(FS1, fs1);
+        flags.set(FS0, fs0);
+
+        write_register!(self.device, CTRL_REG4_A, flags)?;
+
+        self.scale = scale;
+
+        Ok(())
     }
 }
 
