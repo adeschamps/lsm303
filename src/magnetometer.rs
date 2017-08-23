@@ -22,8 +22,8 @@ impl Magnetometer<LinuxI2CDevice> {
     pub fn new<Path>(path: Path) -> Result<Magnetometer<LinuxI2CDevice>>
         where Path: AsRef<::std::path::Path>
     {
-        let device = LinuxI2CDevice::new(&path, I2C_ADDRESS)
-            .chain_err(|| ErrorKind::FailedToOpenDevice)?;
+        let device =
+            LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| ErrorKind::FailedToOpenDevice)?;
 
         Magnetometer::from_i2c_device(device)
     }
@@ -32,7 +32,8 @@ impl Magnetometer<LinuxI2CDevice> {
 
 impl<Dev> Magnetometer<Dev>
     where Dev: I2CDevice,
-          Error: From<Dev::Error>
+          Error: From<Dev::Error>,
+          Dev::Error: Send + 'static
 {
     /// Initialize the magnetometer, given an open I2C device.
     ///
@@ -41,12 +42,15 @@ impl<Dev> Magnetometer<Dev>
     /// Prefer to use `Accelerometer::new`, unless you are using an
     /// implementation of `I2CDevice` that is not covered by this crate.
     pub fn from_i2c_device(mut device: Dev) -> Result<Magnetometer<Dev>> {
-        let mr_reg_m: registers::MrRegM = registers::MODE_CONTINUOUS;
-        device.smbus_write_byte_data(registers::MR_REG_M, mr_reg_m.bits())?;
+        use registers as r;
 
-        let mut cra_reg_m: registers::CraRegM = registers::OUT_RATE_15_0;
-        cra_reg_m.set(registers::TEMP_EN, true);
-        device.smbus_write_byte_data(registers::CRA_REG_M, cra_reg_m.bits())?;
+        // Set magnetometer to continuous mode
+        let mr_reg_m = r::MrRegM::empty();
+        write_register!(device, r::MR_REG_M, mr_reg_m)?;
+
+        // enable temperature; set output rate to 15 Hz
+        let cra_reg_m = r::TEMP_EN | r::DO2;
+        write_register!(device, r::CRA_REG_M, cra_reg_m)?;
 
         let magnetometer = Magnetometer { device };
         Ok(magnetometer)
@@ -83,10 +87,11 @@ impl<Dev> Magnetometer<Dev>
     pub fn set_gain(&mut self, gain: registers::MagGain) -> Result<()>
         where Dev::Error: Send + 'static
     {
-        use registers::Register;
-        let mut register: registers::CrbRegM = self.device.get()?;
+        use registers::{CRB_REG_M, CrbRegM};
+        let mut register = read_register!(self.device, CRB_REG_M, CrbRegM)?;
+
         register.set_gain(gain);
-        self.device.set(register)
+        write_register!(self.device, CRB_REG_M, register)
     }
 
 

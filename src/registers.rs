@@ -5,104 +5,33 @@
 
 //! A subset of the registers on the LSM303 - just the ones that we need.
 
-use errors::{ErrorKind, Result, ResultExt};
-use i2cdev::core::I2CDevice;
-
-/// A trait for a device with strongly typed registers.
-///
-/// A device may implement this trait for each type of register it manipulates.
-/// There is no need to manipulate it by hand; use the `register!` macro instead:
-///
-/// ```ignore
-/// # #[macro_use] extern crate bitflags;
-/// # bitflags!{ struct CtrlReg4A: u8 { const BDU = 1 << 7; } }
-/// # #[macro_use] extern crate lsm303;
-/// # use lsm303::registers::Register;
-/// # use lsm303::{ErrorKind, Result, ResultExt};
-/// # extern crate i2cdev;
-/// # use i2cdev::core::I2CDevice;
-/// # fn main() {
-/// register!(0x23, CtrlReg4A);
-/// # }
-/// ```
-///
-/// Once implemented, registers may be read, modified, and written like so:
-///
-/// ```ignore
-/// let mut register: RegA = device.get()?;
-/// register.set(FLAG);
-/// device.set(register)?;
-/// ```
-pub trait Register<T> {
-    /// Retrieve the value of a register.
-    ///
-    /// ```ignore
-    /// let register: RegA = device.get()?;
-    /// ```
-    fn get(&mut self) -> Result<T>;
-
-    /// Set the value of a register.
-    ///
-    /// ```ignore
-    /// let register = RegA::empty();
-    /// device.set(register)?;
-    /// ```
-    fn set(&mut self, value: T) -> Result<()>;
-}
-
-/// Implement the `Register` trait for a bitflag.
-///
-/// ```ignore
-/// register!(0x00, RegA);
-/// ```
-macro_rules! register {
-    ($address:expr, $bitflag:ident) => {
-        impl<Dev> Register<$bitflag> for Dev
-            where Dev: I2CDevice,
-                  Dev::Error: Send + 'static
-        {
-            fn get(&mut self) -> Result<$bitflag> {
-                self.smbus_read_byte_data($address)
-                    .chain_err(|| ErrorKind::FailedToReadRegister)
-                    .map($bitflag::from_bits_truncate)
-            }
-
-            fn set(&mut self, value: $bitflag) -> Result<()> {
-                self.smbus_write_byte_data($address, value.bits())
-                    .chain_err(|| ErrorKind::FailedToWriteRegister)
-            }
-        }
-    };
-}
-
-/// Implement multiple `Register` traits in one macro invocation.
+/// Read a register and convert to a bitflag.
 ///
 /// ```
-/// registers!(
-///     0x00, RegA;
-///     0x01, RegB;
-/// );
+/// let mut flags = read_register(self.device, CRA_REG_M, CraRegM)?;
 /// ```
-///
-/// is equivalent to
-///
-/// ```
-/// register!(0x00, RegA);
-/// register!(0x01, RegB);
-/// ```
-macro_rules! registers {
-    ( $($address:expr, $bitflag:ident;)* ) => {
-        $(register!($address, $bitflag); )*
+macro_rules! read_register {
+    ( $device:expr, $register:expr, $flag_type:ident ) => {
+        $device
+            .smbus_read_byte_data($register)
+            .chain_err(|| ErrorKind::FailedToReadRegister)
+            .map($flag_type::from_bits_truncate)
     }
 }
 
-registers!(
-    0x23, CtrlReg4A;
 
-    0x00, CraRegM;
-    0x01, CrbRegM;
-    0x02, MrRegM;
-);
+/// Write a bitflag to a register.
+///
+/// ```
+/// write_register!(self.device, CRA_REG_M, flags)?;
+/// ```
+macro_rules! write_register {
+    ( $device:expr, $register:expr, $bitflag:ident ) => {
+        $device
+            .smbus_write_byte_data($register, $bitflag.bits())
+            .chain_err(|| ErrorKind::FailedToWriteRegister)
+    }
+}
 
 
 /// A macro to declare a bunch of u8 constants
