@@ -134,21 +134,22 @@ impl<Dev> Magnetometer<Dev>
     }
 
 
+    // It is unclear how to interpret the TEMP_OUT registers.
+    // The datasheet does not have quite enough information.
+    // Discussions can be found in various places, such as
+    // https://forum.pololu.com/t/16-bit-values-in-lsm303/8499/8
+    // Until this is figured out, this function is being left out.
+    #[cfg(none)]
     /// Read the thermometer.
     pub fn read_temperature(&mut self) -> Result<i16> {
 
-        // unimplemented!("Not yet ready");
-
-        use byteorder::{BigEndian, ReadBytesExt};
-        use std::io::Cursor;
-
         let data = self.device
             .smbus_read_i2c_block_data(registers::TEMP_OUT_H_M, 2)?;
+        if data.len() < 2 {
+            bail!(ErrorKind::NotEnoughData);
+        }
 
-        let mut cursor = Cursor::new(&data);
-
-        let temp = cursor.read_i16::<BigEndian>()? / 16;
-
+        let temp = (data[0] as i16) << 4 | data[1] as i16 >> 4;
         Ok(temp)
     }
 }
