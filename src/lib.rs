@@ -25,8 +25,8 @@ pub use errors::{Error, ErrorKind, Result, ResultExt};
 #[macro_use]
 pub mod registers;
 
-mod accelerometer;
+pub mod accelerometer;
 pub use accelerometer::Accelerometer;
 
-mod magnetometer;
+pub mod magnetometer;
 pub use magnetometer::Magnetometer;
