@@ -169,7 +169,7 @@ impl<Dev> Deref for Magnetometer<Dev>
 }
 
 
-/// Access the underlying I2C device.
+/// Access the underlying `I2CDevice`.
 ///
 /// Refer to the LSM303 datasheet if you plan on accessing the device directly.
 impl<Dev> DerefMut for Magnetometer<Dev>
