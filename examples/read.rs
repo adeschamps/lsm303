@@ -20,18 +20,18 @@ fn run() -> Result<()> {
         lsm303::Magnetometer::new(device).chain_err(|| "Failed to initialize the magnetometer")?;
 
     loop {
-        let (a_x, a_y, a_z) = accelerometer.read_acceleration()
+        let accel = accelerometer.read_acceleration()
             .chain_err(|| "Failed to read the accelerometer")?;
         let (m_x, m_y, m_z) = magnetometer.read_magnetic_field()
             .chain_err(|| "Failed to read the magnetometer")?;
 
-        println!("Accel: {}, {}, {}  ||  Mag: {}, {}, {}",
-                 a_x,
-                 a_y,
-                 a_z,
+        println!("Accel: {:4}, {:4}, {:4}  ||  Mag: {:02.4}, {:02.4}, {:02.4}",
+                 accel.x,
+                 accel.y,
+                 accel.z,
                  m_x,
                  m_y,
                  m_z);
-        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::thread::sleep(std::time::Duration::from_millis(100));
     }
 }
