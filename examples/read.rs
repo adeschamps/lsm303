@@ -3,8 +3,6 @@
 #[macro_use]
 extern crate error_chain;
 
-extern crate i2cdev;
-
 extern crate lsm303;
 
 error_chain!{}
