@@ -17,6 +17,7 @@ pub struct Accelerometer<Dev>
 {
     device: Dev,
     scale: Scale,
+    rate:Rate,
 }
 
 
@@ -30,6 +31,50 @@ pub enum Scale {
     Scale8G,
     /// +/- 16G
     Scale16G,
+}
+
+
+/// Available values for the data rate.
+///
+/// See Table 20 of the LSM303 datasheet.
+/// The default rate is `10 Hz`.
+///
+/// While most rates are valid for both normal
+/// and low-power mode, note that the available
+/// options differ at higher rates.
+///
+/// ```no_run
+/// # use lsm303::accelerometer::{Accelerometer, Rate};
+/// # fn main() { test().unwrap(); }
+/// # fn test() -> lsm303::Result<()> {
+/// let mut accel = Accelerometer::new("/dev/i2c-1")?;
+/// accel.set_rate(Rate::Rate100Hz)?;
+/// # Ok(())
+/// # }
+/// ```
+pub enum Rate {
+    /// Power down mode
+    PowerDown,
+    /// Normal / low-power mode (1 Hz)
+    Rate1Hz,
+    /// Normal / low-power mode (10 Hz)
+    Rate10Hz,
+    /// Normal / low-power mode (25 Hz)
+    Rate25Hz,
+    /// Normal / low-power mode (50 Hz)
+    Rate50Hz,
+    /// Normal / low-power mode (100 Hz)
+    Rate100Hz,
+    /// Normal / low-power mode (200 Hz)
+    Rate200Hz,
+    /// Normal / low-power mode (400 Hz)
+    Rate400Hz,
+    /// Low-power mode (1.620 KHz)
+    Rate1620Hz,
+    /// Normal (1.344 KHz)
+    Rate1344Hz,
+    /// Low-power mode (5.376 KHz)
+    Rate5376Hz,
 }
 
 
@@ -72,7 +117,10 @@ impl<Dev> Accelerometer<Dev>
         // Default scale is +/- 2G
         let scale = Scale::Scale2G;
 
-        let accelerometer = Accelerometer { device, scale };
+        // Default rate
+        let rate = Rate::Rate10Hz;
+
+        let accelerometer = Accelerometer { device, scale, rate };
         Ok(accelerometer)
     }
 
@@ -123,6 +171,34 @@ impl<Dev> Accelerometer<Dev>
 
         write_register!(self.device, CTRL_REG4_A, flags)?;
         self.scale = scale;
+
+        Ok(())
+    }
+
+    /// Set the rate at which acceleration is measured.
+    ///
+    /// ```no_run
+    /// # use lsm303::accelerometer::{Accelerometer, Rate};
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let mut accel = Accelerometer::new("/dev/i2c-1")?;
+    /// accel.set_rate(Rate::Rate100Hz)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn set_rate(&mut self, rate: Rate) -> Result<()> {
+        use registers::{self as r, CTRL_REG1_A, CtrlReg1A};
+
+        let mut flags = read_register!(self.device, CTRL_REG1_A, CtrlReg1A)?;
+        flags.remove(r::ODR3 | r::ODR2 | r::ODR1 | r::ODR0);
+
+        let setting = match rate {
+            _ => CtrlReg1A::empty()
+        };
+        flags.insert(setting);
+
+        write_register!(self.device, CTRL_REG1_A, flags)?;
+        self.rate = rate;
 
         Ok(())
     }
