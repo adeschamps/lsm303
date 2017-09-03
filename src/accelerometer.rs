@@ -112,17 +112,16 @@ impl<Dev> Accelerometer<Dev>
         use registers::{CTRL_REG4_A, CtrlReg4A, FS1, FS0};
 
         let mut flags = read_register!(self.device, CTRL_REG4_A, CtrlReg4A)?;
-        let (fs1, fs0) = match scale {
-            Scale::Scale2G => (false, false),
-            Scale::Scale4G => (false, true),
-            Scale::Scale8G => (true, false),
-            Scale::Scale16G => (true, true),
+        flags.remove(FS1 | FS0);
+        let setting = match scale {
+            Scale::Scale2G => CtrlReg4A::empty(),
+            Scale::Scale4G => FS0,
+            Scale::Scale8G => FS1,
+            Scale::Scale16G => FS1 | FS0,
         };
-        flags.set(FS1, fs1);
-        flags.set(FS0, fs0);
+        flags.insert(setting);
 
         write_register!(self.device, CTRL_REG4_A, flags)?;
-
         self.scale = scale;
 
         Ok(())
