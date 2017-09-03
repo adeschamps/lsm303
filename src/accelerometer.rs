@@ -130,11 +130,22 @@ impl<Dev> Accelerometer<Dev>
         Ok(accelerometer)
     }
 
-    /// Read the accelerometer.
+    /// Read the accelerometer, returning a vector of accelerations.
     ///
-    /// Returns a tuple of (x, y, z) acceleration measured in milli-g's.
+    /// ```no_run
+    /// # use lsm303::accelerometer::{Accelerometer, Rate};
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let mut sensor = Accelerometer::new("/dev/i2c-1")?;
+    /// let accel = sensor.read_acceleration()?;
+    /// println!("Acceleration: ({}, {}, {})",
+    ///     accel.x, accel.y, accel.z);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn read_acceleration(&mut self) -> Result<AccelerationVector> {
         use byteorder::{LittleEndian, ReadBytesExt};
+        use dimensioned::f64prefixes::MILLI;
         use std::io::Cursor;
 
         let data = self.device
@@ -151,7 +162,7 @@ impl<Dev> Accelerometer<Dev>
         let z = cursor.read_i16::<LittleEndian>()? >> 4;
 
         // The scale of the measurement, in g's.
-        let scale = ucum::G_ *
+        let scale = MILLI * ucum::G_ *
             match self.scale {
                 Scale::Scale2G => 1.0,
                 Scale::Scale4G => 2.0,
