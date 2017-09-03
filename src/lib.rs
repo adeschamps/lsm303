@@ -19,6 +19,8 @@ extern crate i2cdev;
 
 // Exports
 
+pub mod common;
+
 mod errors;
 pub use errors::{Error, ErrorKind, Result, ResultExt};
 
