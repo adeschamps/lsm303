@@ -15,11 +15,12 @@ const I2C_ADDRESS: u16 = 0x32 >> 1;
 
 /// Interface to an LSM303 digital accelerometer.
 pub struct Accelerometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     device: Dev,
     scale: Scale,
-    rate:Rate,
+    rate: Rate,
 }
 
 
@@ -87,10 +88,12 @@ pub enum Rate {
 impl Accelerometer<LinuxI2CDevice> {
     /// Initialize the accelerometer for a Linux I2C device.
     pub fn new<Path>(path: Path) -> Result<Accelerometer<LinuxI2CDevice>>
-        where Path: AsRef<::std::path::Path>
+    where
+        Path: AsRef<::std::path::Path>,
     {
-        let device =
-            LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| ErrorKind::FailedToOpenDevice)?;
+        let device = LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| {
+            ErrorKind::FailedToOpenDevice
+        })?;
 
         Accelerometer::from_i2c_device(device)
     }
@@ -98,9 +101,10 @@ impl Accelerometer<LinuxI2CDevice> {
 
 
 impl<Dev> Accelerometer<Dev>
-    where Dev: I2CDevice,
-          Error: From<Dev::Error>,
-          Dev::Error: Send + 'static
+where
+    Dev: I2CDevice,
+    Error: From<Dev::Error>,
+    Dev::Error: Send + 'static,
 {
     /// Initialize the accelerometer, given an open I2C device.
     ///
@@ -126,7 +130,11 @@ impl<Dev> Accelerometer<Dev>
         // Default rate
         let rate = Rate::Rate10Hz;
 
-        let accelerometer = Accelerometer { device, scale, rate };
+        let accelerometer = Accelerometer {
+            device,
+            scale,
+            rate,
+        };
         Ok(accelerometer)
     }
 
@@ -148,8 +156,10 @@ impl<Dev> Accelerometer<Dev>
         use dimensioned::f64prefixes::MILLI;
         use std::io::Cursor;
 
-        let data = self.device
-            .smbus_read_i2c_block_data(registers::OUT_X_L_A | 0x80, 6)?;
+        let data = self.device.smbus_read_i2c_block_data(
+            registers::OUT_X_L_A | 0x80,
+            6,
+        )?;
 
         if data.len() < 6 {
             bail!(ErrorKind::NotEnoughData);
@@ -217,7 +227,7 @@ impl<Dev> Accelerometer<Dev>
         flags.remove(r::ODR3 | r::ODR2 | r::ODR1 | r::ODR0);
 
         let setting = match rate {
-            _ => CtrlReg1A::empty()
+            _ => CtrlReg1A::empty(),
         };
         flags.insert(setting);
 
@@ -233,7 +243,8 @@ impl<Dev> Accelerometer<Dev>
 ///
 /// Most of the methods require a mutable reference; `DerefMut` is implemented as well.
 impl<Dev> Deref for Accelerometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     type Target = Dev;
 
@@ -247,7 +258,8 @@ impl<Dev> Deref for Accelerometer<Dev>
 ///
 /// Refer to the LSM303 datasheet if you plan on accessing the device directly.
 impl<Dev> DerefMut for Accelerometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     fn deref_mut(&mut self) -> &mut Dev {
         &mut self.device
