@@ -1,5 +1,7 @@
 //! Interface to the accelerometer.
 
+use common::Vector3;
+use dimensioned::ucum;
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
@@ -19,6 +21,10 @@ pub struct Accelerometer<Dev>
     scale: Scale,
     rate:Rate,
 }
+
+
+/// The output type of the accelerometer.
+pub type AccelerationVector = Vector3<ucum::MeterPerSecond2<f64>>;
 
 
 /// Settings for the scale of the acceleration measurement.
@@ -127,7 +133,7 @@ impl<Dev> Accelerometer<Dev>
     /// Read the accelerometer.
     ///
     /// Returns a tuple of (x, y, z) acceleration measured in milli-g's.
-    pub fn read_acceleration(&mut self) -> Result<(i16, i16, i16)> {
+    pub fn read_acceleration(&mut self) -> Result<AccelerationVector> {
         use byteorder::{LittleEndian, ReadBytesExt};
         use std::io::Cursor;
 
@@ -144,14 +150,21 @@ impl<Dev> Accelerometer<Dev>
         let y = cursor.read_i16::<LittleEndian>()? >> 4;
         let z = cursor.read_i16::<LittleEndian>()? >> 4;
 
-        let scale = match self.scale {
-            Scale::Scale2G => 1,
-            Scale::Scale4G => 2,
-            Scale::Scale8G => 4,
-            Scale::Scale16G => 12, // This one doesn't follow the pattern - is the datasheet correct?
-        };
+        // The scale of the measurement, in g's.
+        let scale = ucum::G_ *
+            match self.scale {
+                Scale::Scale2G => 1.0,
+                Scale::Scale4G => 2.0,
+                Scale::Scale8G => 4.0,
+                // This one doesn't follow the pattern - is the datasheet correct?
+                Scale::Scale16G => 12.0,
+            };
 
-        let out = (x * scale, y * scale, z * scale);
+        let out = AccelerationVector {
+            x: x as f64 * scale,
+            y: y as f64 * scale,
+            z: z as f64 * scale,
+        };
         Ok(out)
     }
 

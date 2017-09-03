@@ -12,6 +12,8 @@ extern crate bitflags;
 
 extern crate byteorder;
 
+extern crate dimensioned;
+
 #[macro_use]
 extern crate error_chain;
 

@@ -6,5 +6,6 @@ authors = ["Anthony Deschamps <anthony.j.deschamps@gmail.com>"]
 [dependencies]
 bitflags = "*"
 byteorder = "*"
+dimensioned = "*"
 error-chain = "*"
 i2cdev = "*"
