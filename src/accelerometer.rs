@@ -1,7 +1,7 @@
 //! Interface to the accelerometer.
 
 use common::Vector3;
-use dimensioned::ucum;
+use dimensioned::{si, ucum};
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
@@ -25,7 +25,7 @@ where
 
 
 /// The output type of the accelerometer.
-pub type AccelerationVector = Vector3<ucum::MeterPerSecond2<f64>>;
+pub type AccelerationVector = Vector3<si::MeterPerSecond2<f64>>;
 
 
 /// Settings for the scale of the acceleration measurement.
@@ -167,11 +167,11 @@ where
 
         let mut cursor = Cursor::new(&data);
 
-        let x = cursor.read_i16::<LittleEndian>()? >> 4;
-        let y = cursor.read_i16::<LittleEndian>()? >> 4;
-        let z = cursor.read_i16::<LittleEndian>()? >> 4;
-
         // The scale of the measurement, in g's.
+        // Refer to Table 3; linear acceleration sensitivity is measured in mg/LSB.
+        //
+        // `dimensioned` only defines the acceleration of free fall for
+        // UCUM, so we have to convert to SI.
         let scale = MILLI * ucum::G_ *
             match self.scale {
                 Scale::Scale2G => 1.0,
@@ -180,12 +180,13 @@ where
                 // This one doesn't follow the pattern - is the datasheet correct?
                 Scale::Scale16G => 12.0,
             };
+        let scale: si::MeterPerSecond2<f64> = scale.into();
 
-        let out = AccelerationVector {
-            x: x as f64 * scale,
-            y: y as f64 * scale,
-            z: z as f64 * scale,
-        };
+        let x = (cursor.read_i16::<LittleEndian>()? >> 4) as f64 * scale;
+        let y = (cursor.read_i16::<LittleEndian>()? >> 4) as f64 * scale;
+        let z = (cursor.read_i16::<LittleEndian>()? >> 4) as f64 * scale;
+
+        let out = AccelerationVector { x, y, z };
         Ok(out)
     }
 
