@@ -1,5 +1,7 @@
 //! Interface to the magnetometer.
 
+use common::Vector3;
+use dimensioned::{si, ucum};
 use errors::{Error, ErrorKind, Result, ResultExt};
 use i2cdev::core::I2CDevice;
 use i2cdev::linux::LinuxI2CDevice;
@@ -18,6 +20,10 @@ pub struct Magnetometer<Dev>
     device: Dev,
     gain: Gain,
 }
+
+
+/// The output type of the magnetometer.
+pub type MagneticField = Vector3<si::Tesla<f64>>;
 
 
 /// The allowed settings for the gain on the magnetometer.
@@ -77,18 +83,28 @@ impl<Dev> Magnetometer<Dev>
 
         let gain = Gain::Gain_1_3;
 
-        let magnetometer = Magnetometer { device, gain };
+        let mut magnetometer = Magnetometer { device, gain };
+        magnetometer.set_gain(Gain::Gain_1_3)?;
+
         Ok(magnetometer)
     }
 
 
-    /// Read the magnetometer
+    /// Read the magnetometer, returning the magnetic field as a vector.
     ///
-    /// Returns a tuple of (x, y, z).
-    /// WIP: the units are unclear.
-    pub fn read_magnetic_field(&mut self) -> Result<(i16, i16, i16)> {
-        use byteorder::{BigEndian, ReadBytesExt};
-        use std::io::Cursor;
+    /// ```no_run
+    /// # use lsm303::Magnetometer;
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let mut sensor = Magnetometer::new("/dev/i2c-1")?;
+    /// let field = sensor.read_magnetic_field()?;
+    /// println!("Magnetic field: ({}, {}, {})",
+    ///     field.x, field.y, field.z);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn read_magnetic_field(&mut self) -> Result<MagneticField> {
+        use byteorder::{ByteOrder, BigEndian};
 
         let data = self.device
             .smbus_read_i2c_block_data(registers::OUT_X_H_M, 6)?;
@@ -96,14 +112,25 @@ impl<Dev> Magnetometer<Dev>
             bail!(ErrorKind::NotEnoughData);
         }
 
-        let mut cursor = Cursor::new(&data);
+        // Refer to Table 3 or Table 75 of the datasheet.
+        let (scale_xy, scale_z) = match self.gain {
+            Gain::Gain_1_3 => (1100., 980.),
+            Gain::Gain_1_9 => (855.0, 760.),
+            Gain::Gain_2_5 => (670., 600.),
+            Gain::Gain_4_0 => (450., 400.),
+            Gain::Gain_4_7 => (400., 355.),
+            Gain::Gain_5_6 => (330., 295.),
+            Gain::Gain_8_1 => (230., 205.),
+        };
+        let scale_xy: si::Tesla<f64> = (ucum::GS / scale_xy).into();
+        let scale_z: si::Tesla<f64> = (ucum::GS / scale_z).into();
 
         // Yes indeed, the registers are ordered as X, Z, Y
-        let x = cursor.read_i16::<BigEndian>()?;
-        let z = cursor.read_i16::<BigEndian>()?;
-        let y = cursor.read_i16::<BigEndian>()?;
+        let x = BigEndian::read_i16(&data[0..2]) as f64 * scale_xy;
+        let z = BigEndian::read_i16(&data[2..4]) as f64 * scale_z;
+        let y = BigEndian::read_i16(&data[4..6]) as f64 * scale_xy;
 
-        let out = (x, y, z);
+        let out = MagneticField { x, y, z };
         Ok(out)
     }
 
