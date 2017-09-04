@@ -141,7 +141,7 @@ where
     /// Read the accelerometer, returning a vector of accelerations.
     ///
     /// ```no_run
-    /// # use lsm303::accelerometer::{Accelerometer, Rate};
+    /// # use lsm303::Accelerometer;
     /// # fn main() { test().unwrap(); }
     /// # fn test() -> lsm303::Result<()> {
     /// let mut sensor = Accelerometer::new("/dev/i2c-1")?;

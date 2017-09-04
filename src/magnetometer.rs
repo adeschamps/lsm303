@@ -15,7 +15,8 @@ const I2C_ADDRESS: u16 = 0x3C >> 1;
 
 /// Interface to an LSM303 digital magnetometer.
 pub struct Magnetometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     device: Dev,
     gain: Gain,
@@ -49,10 +50,12 @@ pub enum Gain {
 impl Magnetometer<LinuxI2CDevice> {
     /// Initialize the magnetometer for a Linux I2C device.
     pub fn new<Path>(path: Path) -> Result<Magnetometer<LinuxI2CDevice>>
-        where Path: AsRef<::std::path::Path>
+    where
+        Path: AsRef<::std::path::Path>,
     {
-        let device =
-            LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| ErrorKind::FailedToOpenDevice)?;
+        let device = LinuxI2CDevice::new(&path, I2C_ADDRESS).chain_err(|| {
+            ErrorKind::FailedToOpenDevice
+        })?;
 
         Magnetometer::from_i2c_device(device)
     }
@@ -60,9 +63,10 @@ impl Magnetometer<LinuxI2CDevice> {
 
 
 impl<Dev> Magnetometer<Dev>
-    where Dev: I2CDevice,
-          Error: From<Dev::Error>,
-          Dev::Error: Send + 'static
+where
+    Dev: I2CDevice,
+    Error: From<Dev::Error>,
+    Dev::Error: Send + 'static,
 {
     /// Initialize the magnetometer, given an open I2C device.
     ///
@@ -106,8 +110,10 @@ impl<Dev> Magnetometer<Dev>
     pub fn read_magnetic_field(&mut self) -> Result<MagneticField> {
         use byteorder::{ByteOrder, BigEndian};
 
-        let data = self.device
-            .smbus_read_i2c_block_data(registers::OUT_X_H_M, 6)?;
+        let data = self.device.smbus_read_i2c_block_data(
+            registers::OUT_X_H_M,
+            6,
+        )?;
         if data.len() < 6 {
             bail!(ErrorKind::NotEnoughData);
         }
@@ -137,7 +143,8 @@ impl<Dev> Magnetometer<Dev>
 
     /// Set the gain of the magnetometer.
     pub fn set_gain(&mut self, gain: Gain) -> Result<()>
-        where Dev::Error: Send + 'static
+    where
+        Dev::Error: Send + 'static,
     {
         use registers::{self as r, CRB_REG_M, CrbRegM};
         let mut flags = read_register!(self.device, CRB_REG_M, CrbRegM)?;
@@ -170,8 +177,10 @@ impl<Dev> Magnetometer<Dev>
     /// Read the thermometer.
     pub fn read_temperature(&mut self) -> Result<i16> {
 
-        let data = self.device
-            .smbus_read_i2c_block_data(registers::TEMP_OUT_H_M, 2)?;
+        let data = self.device.smbus_read_i2c_block_data(
+            registers::TEMP_OUT_H_M,
+            2,
+        )?;
         if data.len() < 2 {
             bail!(ErrorKind::NotEnoughData);
         }
@@ -186,7 +195,8 @@ impl<Dev> Magnetometer<Dev>
 ///
 /// Most of the methods require a mutable reference; `DerefMut` is implemented as well.
 impl<Dev> Deref for Magnetometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     type Target = Dev;
 
@@ -200,7 +210,8 @@ impl<Dev> Deref for Magnetometer<Dev>
 ///
 /// Refer to the LSM303 datasheet if you plan on accessing the device directly.
 impl<Dev> DerefMut for Magnetometer<Dev>
-    where Dev: I2CDevice
+where
+    Dev: I2CDevice,
 {
     fn deref_mut(&mut self) -> &mut Dev {
         &mut self.device
