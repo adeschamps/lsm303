@@ -2,6 +2,11 @@
 name = "lsm303"
 version = "0.1.0"
 authors = ["Anthony Deschamps <anthony.j.deschamps@gmail.com>"]
+description = "Interface to the LSM303 digital accelerometer and magnetometer"
+repository = "https://github.com/adeschamps/lsm303.git"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/lsm303"
 
 [dependencies]
 bitflags = "*"
