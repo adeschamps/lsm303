@@ -1,5 +1,9 @@
 #![allow(unused_doc_comment)]
 
+extern crate dimensioned;
+use dimensioned::si;
+use dimensioned::f64prefixes::MILLI;
+
 #[macro_use]
 extern crate error_chain;
 
@@ -20,16 +24,16 @@ fn run() -> Result<()> {
     loop {
         let accel = accelerometer.read_acceleration()
             .chain_err(|| "Failed to read the accelerometer")?;
-        let (m_x, m_y, m_z) = magnetometer.read_magnetic_field()
+        let mag = magnetometer.read_magnetic_field()
             .chain_err(|| "Failed to read the magnetometer")?;
 
-        println!("Accel: {:4}, {:4}, {:4}  ||  Mag: {:02.4}, {:02.4}, {:02.4}",
-                 accel.x,
-                 accel.y,
-                 accel.z,
-                 m_x,
-                 m_y,
-                 m_z);
+        println!("Accel: ({:02.2}, {:02.2}, {:02.2}) m/s^2  ||  Mag: ({:02.2}, {:02.2}, {:02.2}) mT",
+                 accel.x / si::MPS2,
+                 accel.y / si::MPS2,
+                 accel.z / si::MPS2,
+                 mag.x / (MILLI * si::T),
+                 mag.y / (MILLI * si::T),
+                 mag.z / (MILLI * si::T));
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 }
