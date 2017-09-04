@@ -9,8 +9,8 @@ readme = "README.md"
 documentation = "https://docs.rs/lsm303"
 
 [dependencies]
-bitflags = "*"
-byteorder = "*"
-dimensioned = "*"
-error-chain = "*"
-i2cdev = "*"
+bitflags = "0.9"
+byteorder = "1.1"
+dimensioned = "0.6"
+error-chain = "0.10"
+i2cdev = "0.3"
