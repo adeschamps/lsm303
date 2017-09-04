@@ -49,6 +49,11 @@ pub enum Gain {
 
 impl Magnetometer<LinuxI2CDevice> {
     /// Initialize the magnetometer for a Linux I2C device.
+    ///
+    /// ```
+    /// # use lsm303::Magnetometer;
+    /// let sensor = Magnetometer::new("/dev/i2c-1");
+    /// ```
     pub fn new<Path>(path: Path) -> Result<Magnetometer<LinuxI2CDevice>>
     where
         Path: AsRef<::std::path::Path>,
@@ -74,6 +79,19 @@ where
     /// but initialization of the sensor is not.
     /// Prefer to use `Accelerometer::new`, unless you are using an
     /// implementation of `I2CDevice` that is not covered by this crate.
+    ///
+    /// ```no_run
+    /// # extern crate lsm303;
+    /// # use lsm303::Magnetometer;
+    /// # extern crate i2cdev;
+    /// # use i2cdev::linux::LinuxI2CDevice;
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let device = LinuxI2CDevice::new("/dev/i2c-1", 0x3C >> 1)?;
+    /// let sensor = Magnetometer::from_i2c_device(device)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_i2c_device(mut device: Dev) -> Result<Magnetometer<Dev>> {
         use registers as r;
 
@@ -142,6 +160,16 @@ where
 
 
     /// Set the gain of the magnetometer.
+    ///
+    /// ```no_run
+    /// # use lsm303::magnetometer::{Magnetometer, Gain};
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let mut sensor = Magnetometer::new("/dev/i2c-1")?;
+    /// sensor.set_gain(Gain::Gain_4_0)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn set_gain(&mut self, gain: Gain) -> Result<()>
     where
         Dev::Error: Send + 'static,

@@ -87,6 +87,11 @@ pub enum Rate {
 
 impl Accelerometer<LinuxI2CDevice> {
     /// Initialize the accelerometer for a Linux I2C device.
+    ///
+    /// ```
+    /// # use lsm303::Accelerometer;
+    /// let sensor = Accelerometer::new("/dev/i2c-1");
+    /// ```
     pub fn new<Path>(path: Path) -> Result<Accelerometer<LinuxI2CDevice>>
     where
         Path: AsRef<::std::path::Path>,
@@ -112,6 +117,19 @@ where
     /// but initialization of the sensor is not.
     /// Prefer to use `Accelerometer::new`, unless you are using an
     /// implementation of `I2CDevice` that is not covered by this crate.
+    ///
+    /// ```no_run
+    /// # extern crate lsm303;
+    /// # use lsm303::Accelerometer;
+    /// # extern crate i2cdev;
+    /// # use i2cdev::linux::LinuxI2CDevice;
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let device = LinuxI2CDevice::new("/dev/i2c-1", 0x32 >> 1)?;
+    /// let sensor = Accelerometer::from_i2c_device(device)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_i2c_device(mut device: Dev) -> Result<Accelerometer<Dev>> {
         use registers::{self as r, CTRL_REG1_A, CTRL_REG4_A, CtrlReg4A};
 
@@ -191,6 +209,16 @@ where
     }
 
     /// Set the scale of the acceleration measurement.
+    ///
+    /// ```no_run
+    /// # use lsm303::accelerometer::{Accelerometer, Scale};
+    /// # fn main() { test().unwrap(); }
+    /// # fn test() -> lsm303::Result<()> {
+    /// let mut sensor = Accelerometer::new("/dev/i2c-1")?;
+    /// sensor.set_scale(Scale::Scale4G)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn set_scale(&mut self, scale: Scale) -> Result<()> {
         use registers::{CTRL_REG4_A, CtrlReg4A, FS1, FS0};
 
@@ -216,8 +244,8 @@ where
     /// # use lsm303::accelerometer::{Accelerometer, Rate};
     /// # fn main() { test().unwrap(); }
     /// # fn test() -> lsm303::Result<()> {
-    /// let mut accel = Accelerometer::new("/dev/i2c-1")?;
-    /// accel.set_rate(Rate::Rate100Hz)?;
+    /// let mut sensor = Accelerometer::new("/dev/i2c-1")?;
+    /// sensor.set_rate(Rate::Rate100Hz)?;
     /// # Ok(())
     /// # }
     /// ```
