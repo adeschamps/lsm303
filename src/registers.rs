@@ -3,7 +3,17 @@
 // which should serve as its best documentation.
 #![allow(missing_docs)]
 
-//! A subset of the registers on the LSM303 - just the ones that we need.
+//! Type and address definitions for most of the LSM303 registers.
+//!
+//! While the `accelerometer` and `magnetometer` modules aim to cover common
+//! use cases, you may require more direct control of the sensors.
+//! For those purposes, both `Accelerometer` and `Magnetometer` implement
+//! `Deref` and `DerefMut`, giving access to the underlying I2C device.
+//!
+//! This module defines all of the register addresses as `u8` constants.
+//! It also defines bitflags for most of the registers.
+//! Refer to the [datasheet](http://www.st.com/resource/en/datasheet/lsm303dlhc.pdf)
+//! for more extensive documentation.
 
 /// Read a register and convert to a bitflag.
 ///
@@ -127,6 +137,7 @@ macro_rules! define_registers {
 }
 
 // The following definitions cover many, but not all, of the LSM303 bitflags.
+// Refer to Section 7 of the LSM303 datasheet.
 //
 // Most of the flags are unique to a single register.
 // In those cases, the names directly correspond to the register address.
