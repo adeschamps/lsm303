@@ -1,3 +1,4 @@
+[![crates.io](http://meritbadge.herokuapp.com/lsm303)](https://crates.io/crates/lsm303)
 [![Build Status](https://travis-ci.org/adeschamps/lsm303.svg?branch=master)](https://travis-ci.org/adeschamps/lsm303)
 [![Documentation](https://docs.rs/lsm303/badge.svg)](https://docs.rs/lsm303/)
 
