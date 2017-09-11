@@ -9,7 +9,7 @@ readme = "README.md"
 documentation = "https://docs.rs/lsm303"
 
 [dependencies]
-bitflags = "0.9"
+bitflags = "1.0"
 byteorder = "1.1"
 dimensioned = "0.6"
 error-chain = "0.11"

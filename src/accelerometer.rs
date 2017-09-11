@@ -131,15 +131,16 @@ where
     /// # }
     /// ```
     pub fn from_i2c_device(mut device: Dev) -> Result<Accelerometer<Dev>> {
-        use registers::{self as r, CTRL_REG1_A, CTRL_REG4_A, CtrlReg4A};
+        use registers::{CTRL_REG1_A, CtrlReg1A, CTRL_REG4_A, CtrlReg4A};
 
         // Set data rate to 10 Hz, enable all axes.
-        let ctrl_reg1_a = r::ODR1 | r::Zen | r::Yen | r::Xen;
+        type R = CtrlReg1A;
+        let ctrl_reg1_a = R::ODR1 | R::Zen | R::Yen | R::Xen;
         write_register!(device, CTRL_REG1_A, ctrl_reg1_a)?;
 
         // Enable high resolution output mode.
         let mut ctrl_reg4_a = read_register!(device, CTRL_REG4_A, CtrlReg4A)?;
-        ctrl_reg4_a.insert(r::HR);
+        ctrl_reg4_a.insert(CtrlReg4A::HR);
         write_register!(device, CTRL_REG4_A, ctrl_reg4_a)?;
 
         // Default scale is +/- 2G
@@ -220,15 +221,16 @@ where
     /// # }
     /// ```
     pub fn set_scale(&mut self, scale: Scale) -> Result<()> {
-        use registers::{CTRL_REG4_A, CtrlReg4A, FS1, FS0};
+        use registers::{CTRL_REG4_A, CtrlReg4A};
+        type R = CtrlReg4A;
 
         let mut flags = read_register!(self.device, CTRL_REG4_A, CtrlReg4A)?;
-        flags.remove(FS1 | FS0);
+        flags.remove(R::FS1 | R::FS0);
         let setting = match scale {
-            Scale::Scale2G => CtrlReg4A::empty(),
-            Scale::Scale4G => FS0,
-            Scale::Scale8G => FS1,
-            Scale::Scale16G => FS1 | FS0,
+            Scale::Scale2G => R::empty(),
+            Scale::Scale4G => R::FS0,
+            Scale::Scale8G => R::FS1,
+            Scale::Scale16G => R::FS1 | R::FS0,
         };
         flags.insert(setting);
 
@@ -250,10 +252,11 @@ where
     /// # }
     /// ```
     pub fn set_rate(&mut self, rate: Rate) -> Result<()> {
-        use registers::{self as r, CTRL_REG1_A, CtrlReg1A};
+        use registers::{CTRL_REG1_A, CtrlReg1A};
+        type R = CtrlReg1A;
 
         let mut flags = read_register!(self.device, CTRL_REG1_A, CtrlReg1A)?;
-        flags.remove(r::ODR3 | r::ODR2 | r::ODR1 | r::ODR0);
+        flags.remove(R::ODR3 | R::ODR2 | R::ODR1 | R::ODR0);
 
         let setting = match rate {
             _ => CtrlReg1A::empty(),

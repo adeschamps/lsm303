@@ -93,15 +93,15 @@ where
     /// # }
     /// ```
     pub fn from_i2c_device(mut device: Dev) -> Result<Magnetometer<Dev>> {
-        use registers as r;
+        use registers::{CRA_REG_M, MR_REG_M, CraRegM, MrRegM};
 
         // Set magnetometer to continuous mode
-        let mr_reg_m = r::MrRegM::empty();
-        write_register!(device, r::MR_REG_M, mr_reg_m)?;
+        let mr_reg_m = MrRegM::empty();
+        write_register!(device, MR_REG_M, mr_reg_m)?;
 
         // enable temperature; set output rate to 15 Hz
-        let cra_reg_m = r::TEMP_EN | r::DO2;
-        write_register!(device, r::CRA_REG_M, cra_reg_m)?;
+        let cra_reg_m = CraRegM::TEMP_EN | CraRegM::DO2;
+        write_register!(device, CRA_REG_M, cra_reg_m)?;
 
         let gain = Gain::Gain_1_3;
 
@@ -174,18 +174,19 @@ where
     where
         Dev::Error: Send + 'static,
     {
-        use registers::{self as r, CRB_REG_M, CrbRegM};
+        use registers::{CRB_REG_M, CrbRegM};
+        type R = CrbRegM;
         let mut flags = read_register!(self.device, CRB_REG_M, CrbRegM)?;
 
-        flags.remove(r::GN2 | r::GN1 | r::GN0);
+        flags.remove(R::GN2 | R::GN1 | R::GN0);
         let setting = match gain {
-            Gain::Gain_1_3 => /* --  |  ---- */ r::GN0,
-            Gain::Gain_1_9 => /* -- */ r::GN1,
-            Gain::Gain_2_5 => /* -- */ r::GN1 | r::GN0,
-            Gain::Gain_4_0 => r::GN2,
-            Gain::Gain_4_7 => r::GN2 | /* -- */ r::GN0,
-            Gain::Gain_5_6 => r::GN2 | r::GN1,
-            Gain::Gain_8_1 => r::GN2 | r::GN1 | r::GN0,
+            Gain::Gain_1_3 => /* --  |  ---- */ R::GN0,
+            Gain::Gain_1_9 => /* -- */ R::GN1,
+            Gain::Gain_2_5 => /* -- */ R::GN1 | R::GN0,
+            Gain::Gain_4_0 => R::GN2,
+            Gain::Gain_4_7 => R::GN2 | /* -- */ R::GN0,
+            Gain::Gain_5_6 => R::GN2 | R::GN1,
+            Gain::Gain_8_1 => R::GN2 | R::GN1 | R::GN0,
         };
         flags.insert(setting);
 
