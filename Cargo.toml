@@ -11,6 +11,6 @@ documentation = "https://docs.rs/lsm303"
 [dependencies]
 bitflags = "1.0"
 byteorder = "1.1"
-dimensioned = "0.6"
+dimensioned = "0.7"
 error-chain = "0.12"
 i2cdev = "0.4"
